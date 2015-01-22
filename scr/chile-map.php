@@ -27,7 +27,7 @@ require( '../wp-load.php' );
     center: myLatlng,
     mapTypeId: google.maps.MapTypeId.TERRAIN
   }
-    
+
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
     
 <?php

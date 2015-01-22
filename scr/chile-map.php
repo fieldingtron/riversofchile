@@ -1,5 +1,17 @@
 <?php
 require( '../wp-load.php' );
+
+function excerpt($limit) {
+    $excerpt = explode(' ', get_the_excerpt(), $limit);
+    if (count($excerpt)>=$limit) {
+        array_pop($excerpt);
+        $excerpt = implode(" ",$excerpt).'...';
+    } else {
+        $excerpt = implode(" ",$excerpt);
+    }
+    $excerpt = preg_replace('`\[[^\]]*\]`','',$excerpt);
+    return $excerpt;
+}
 ?>
 
 
@@ -12,32 +24,55 @@ require( '../wp-load.php' );
   body { height: 100%; margin: 0px; padding: 0px }
   #map_canvas { height: 100% }
 </style>
-<?php
-
-?>
 <script type="text/javascript"
     src="http://maps.google.com/maps/api/js?sensor=false">
 </script>
+
+
+
+
 <script type="text/javascript">
   function initialize() {
      var myLatlng =  new google.maps.LatLng(-40.358072, -72.376791);
-	 
-  var myOptions = {
+    <?php
+    //setup river locations from DB
+$args = array( 'numberposts' => -1, 'category_name' => 'map');
+$posts= get_posts( $args );
+if ($posts) {
+	foreach ( $posts as $post ) {
+	$postID = $post->ID;
+	$putInLat = get_post_meta($post->ID, "Put In Lat", true);
+	$putInLong = get_post_meta($post->ID, "Put In Long", true);
+	if (($putInLat=="")||($putInLong==""))
+			{continue;}
+
+	echo "var pos$postID =  new google.maps.LatLng($putInLat, $putInLong);\n";
+}}
+
+?>
+
+    var myOptions = {
     zoom: 8,
     center: myLatlng,
     mapTypeId: google.maps.MapTypeId.TERRAIN
   }
-
   var map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-    
+
+
+      /*
+      add custom control to reset map  form        http://www.w3schools.com/googleAPI/google_maps_controls.asp see London example
+      try Google Maps - 45° Perspective View
+      */
 <?php
-query_posts('cat=157');
-if (have_posts()) :
-  while (have_posts()) : the_post();
+$args = array( 'numberposts' => -1, 'category_name' => 'map');
+$posts= get_posts( $args );
+if ($posts) {
+	foreach ( $posts as $post ) {
+	setup_postdata($post);
 	$postID = $post->ID;
 	$postTitle = get_the_title();
 	$permalink = get_permalink();
-	$excerpt = 
+	//$excerpt =
 	$Difficulty = get_post_meta($post->ID, "Difficulty", true);
 	$Distance = get_post_meta($post->ID, "Distance", true);
 	$ElevationDrop = get_post_meta($post->ID, "Elevation Drop", true);
@@ -47,40 +82,31 @@ if (have_posts()) :
 	$putInLong = get_post_meta($post->ID, "Put In Long", true);
 	$takeOutLat = get_post_meta($post->ID, "Take Out Lat", true);
 	$takeOutLong = get_post_meta($post->ID, "Take Out Long", true);
- 	
-	
+
+	if (($putInLat=="")||($putInLong==""))
+			{continue;}
 	?>
-	//content
-	var contentString<?php echo $postID;?> = '<div id="content">'+
-    '<div id="siteNotice">'+
-    '</div>'+
-    '<h1 id="firstHeading" class="firstHeading"><?php echo $postTitle;?></h1>'+
-    '<div id="bodyContent"> <?php echo trim(get_the_excerpt()); ?>'+
-    '<p>More Details: <a target="_blank" href="<?php echo $permalink; ?>"><?php echo $permalink; ?>'+
-    '</a></p>'+
-    '</div>'+
-    '</div>';
-	
-	//infowindow
-	var infowindow<?php echo $postID;?> = new google.maps.InfoWindow({   content: contentString<?php echo $postID;?>   });
-	
-	
-	
-	<?php
-	
-	
-	echo "var marker$postID = new google.maps.Marker({ position: myLatlng,  map: map, title:'$postTitle' });"; 
-	
-	?>
-	//listener
-	google.maps.event.addListener(marker<?php echo $postID;?>, 'click', function() {  infowindow<?php echo $postID;?>.open(map,marker<?php echo $postID;?>); });
-	<?php
- 	 
-  endwhile;  
- endif;
-?>
+      //content for infowindow
+      var contentString<?php echo $postID;?> = '<div id="content"> <div id="siteNotice"></div>' +
+          '<h1 id="firstHeading" class="firstHeading"><?php echo $postTitle;?></h1>' +
+          '<div id="bodyContent"> <?php echo trim(excerpt(20)); ?><p><a target="_blank" href="<?php echo $permalink; ?>">More River Details Click Here' +
+          '</a></p></div></div>\n';
+
+      //infowindow
+      var infowindow<?php echo $postID;?> = new google.maps.InfoWindow({ content: contentString<?php echo $postID;?>, maxWidth: 200 });
+      //marker
+      <?php
+	  echo "var marker$postID = new google.maps.Marker({ position: pos$postID,  map: map, title:'$postTitle' });\n";
+	  ?>
+      //listener
+      google.maps.event.addListener(marker<?php echo $postID;?>, 'click', function () {
+          infowindow<?php echo $postID;?>.open(map, marker<?php echo $postID;?>);
+      });
+      <?php
+}  }
+  ?>
    
-  
+
   }
 
 </script>

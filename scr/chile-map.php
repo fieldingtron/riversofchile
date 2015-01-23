@@ -25,7 +25,7 @@ function excerpt($limit) {
   #map_canvas { height: 100% }
 </style>
 <script type="text/javascript"
-    src="http://maps.google.com/maps/api/js?sensor=false">
+    src="http://maps.google.com/maps/api/js?sensor=true">
 </script>
 
 
@@ -33,8 +33,7 @@ function excerpt($limit) {
 
 <script type="text/javascript">
   function initialize() {
-     var myLatlng =  new google.maps.LatLng(-40.358072, -72.376791);
-    <?php
+      var myLatlng =  new google.maps.LatLng(-40.358072, -72.376791);<?php
     //setup river locations from DB
 $args = array( 'numberposts' => -1, 'category_name' => 'map');
 $posts= get_posts( $args );
@@ -46,7 +45,7 @@ if ($posts) {
 	if (($putInLat=="")||($putInLong==""))
 			{continue;}
 
-	echo "var pos$postID =  new google.maps.LatLng($putInLat, $putInLong);\n";
+	echo "\n    var pos$postID =  new google.maps.LatLng($putInLat, $putInLong);";
 }}
 
 ?>
@@ -85,15 +84,23 @@ if ($posts) {
 
 	if (($putInLat=="")||($putInLong==""))
 			{continue;}
-	?>
-      //content for infowindow
-      var contentString<?php echo $postID;?> = '<div id="content"> <div id="siteNotice"></div>' +
-          '<h1 id="firstHeading" class="firstHeading"><?php echo $postTitle;?></h1>' +
-          '<div id="bodyContent"> <?php echo trim(excerpt(20)); ?><p><a target="_blank" href="<?php echo $permalink; ?>">More River Details Click Here' +
-          '</a></p></div></div>\n';
 
+     // get thumbnail image
+     $thumbnail = "";
+    if ( has_post_thumbnail() ) { // check if the post has a Post Thumbnail assigned to it.
+        $thumbnail = get_the_post_thumbnail( $postID, 'thumbnail', array( 'class' => 'center' ) );
+    }
+
+
+?>
+
+
+      <?php echo "//Build River info for River $postTitle \n";?>
+      //content for infowindow
+      var contentString<?php echo $postID;?> = '<div id="content"> <div id="siteNotice"></div> <h1 id="firstHeading" class="firstHeading"><?php echo $postTitle;?></h1>' +
+          '<div id="bodyContent"> <?php echo $thumbnail;?><br/><?php  echo trim(excerpt(20)); ?><p><a target="_blank" href="<?php echo $permalink; ?>">River Details here</a></p></div></div>';
       //infowindow
-      var infowindow<?php echo $postID;?> = new google.maps.InfoWindow({ content: contentString<?php echo $postID;?>, maxWidth: 200 });
+      var infowindow<?php echo $postID;?> = new google.maps.InfoWindow({ content: contentString<?php echo $postID;?>, maxWidth: 150 });
       //marker
       <?php
 	  echo "var marker$postID = new google.maps.Marker({ position: pos$postID,  map: map, title:'$postTitle' });\n";

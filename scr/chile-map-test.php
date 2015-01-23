@@ -36,7 +36,14 @@ if ($posts) {
 	<li>  Distance : <?php echo $Distance?> </li>
 	<li>  Lat : <?php echo $putInLat?> </li>
 	<li>  Long : <?php echo $putInLong?> </li>
-</ul>
+	<?php
+
+	if ( has_post_thumbnail() ) {
+		the_post_thumbnail('thumbnail');
+	}
+
+	?>
+	</ul>
 <?php
 
 	}
